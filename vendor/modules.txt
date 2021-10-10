@@ -1,0 +1,5 @@
+# github.com/opencontainers/runc v1.0.2
+github.com/opencontainers/runc/libcontainer/user
+# golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac
+golang.org/x/sys/unix
+golang.org/x/sys/internal/unsafeheader
