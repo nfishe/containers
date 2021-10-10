@@ -4,9 +4,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
-	"strconv"
 	"syscall"
 
 	"github.com/nfishe/containers/reexec"
@@ -57,7 +55,6 @@ func child() {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{}
 
 	path, err := filepath.Abs("rootfs")
 	if err != nil {
@@ -66,7 +63,6 @@ func child() {
 
 	utilruntime.Must(chroot(path))
 
-	log.Printf("UID: %v", unix.Getuid())
 	utilruntime.Must(cmd.Run())
 }
 
@@ -79,36 +75,5 @@ func chroot(path string) error {
 		return err
 	}
 
-	if err := substituteUser(65532, 65532); err != nil {
-		return err
-	}
-
 	return unix.Chdir("/")
-}
-
-func substituteUser(uid, gid int) error {
-	if uid := unix.Geteuid(); uid == 0 {
-		userent, err := user.LookupId(strconv.Itoa(uid))
-		if err != nil {
-			panic(err)
-		}
-
-		gid, err := strconv.Atoi(userent.Gid)
-		if err != nil {
-			log.Panic(err)
-		}
-		uid, err := strconv.Atoi(userent.Uid)
-		if err != nil {
-			log.Panic(err)
-		}
-
-		if err := syscall.Setgid(gid); err != nil {
-			return err
-		}
-
-		if err := syscall.Setuid(uid); err != nil {
-			return err
-		}
-	}
-	return nil
 }

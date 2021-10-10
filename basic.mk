@@ -23,16 +23,3 @@ vet: ## Verifies `go vet` passes.
 	@if [[ ! -z "$(shell $(GO) vet $(shell $(GO) list ./... | grep -v vendor) | tee /dev/stderr)" ]]; then \
 		exit 1; \
 	fi
-
-# This rule tells make how to build hello from hello.cpp
-hello: src/hello.c
-	gcc -o hello src/hello.c
-
-.PHONY: install
-install:
-	mkdir -p bin
-	cp -p hello bin
-
-.PHONY: clean 
-clean:
-	rm -f hello
