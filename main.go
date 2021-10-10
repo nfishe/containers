@@ -7,10 +7,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"syscall"
+	"user"
 
-	"github.com/nfishe/containers-from-scratch/reexec"
-	utilruntime "github.com/nfishe/containers-from-scratch/util/runtime"
-	"github.com/opencontainers/runc/libcontainer/user"
+	"github.com/nfishe/containers/reexec"
+	utilruntime "github.com/nfishe/containers/util/runtime"
+
 	"golang.org/x/sys/unix"
 )
 
