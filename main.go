@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
+	"strconv"
 	"syscall"
-	"user"
 
 	"github.com/nfishe/containers/reexec"
 	utilruntime "github.com/nfishe/containers/util/runtime"
@@ -53,8 +53,6 @@ func run() {
 }
 
 func child() {
-	fmt.Printf("Running %v \n", os.Args[2:])
-
 	cmd := exec.Command(os.Args[2], os.Args[3:]...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -66,26 +64,51 @@ func child() {
 		log.Fatal(err)
 	}
 
-	utilruntime.Must(unix.Chdir(path))
-	if uid := unix.Geteuid(); uid == 0 {
-		if err := chroot(path); err != nil {
-			panic(err)
-		}
+	utilruntime.Must(chroot(path))
 
-		userent, err := user.LookupUid(65532)
-		if err != nil {
-			panic(err)
-		}
-
-		utilruntime.Must(syscall.Setuid(userent.Uid))
-	}
+	log.Printf("UID: %v", unix.Getuid())
 	utilruntime.Must(cmd.Run())
 }
 
 func chroot(path string) error {
+	if err := unix.Chdir(path); err != nil {
+		return err
+	}
+
 	if err := unix.Chroot(path); err != nil {
 		return err
 	}
 
+	if err := substituteUser(65532, 65532); err != nil {
+		return err
+	}
+
 	return unix.Chdir("/")
+}
+
+func substituteUser(uid, gid int) error {
+	if uid := unix.Geteuid(); uid == 0 {
+		userent, err := user.LookupId(strconv.Itoa(uid))
+		if err != nil {
+			panic(err)
+		}
+
+		gid, err := strconv.Atoi(userent.Gid)
+		if err != nil {
+			log.Panic(err)
+		}
+		uid, err := strconv.Atoi(userent.Uid)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		if err := syscall.Setgid(gid); err != nil {
+			return err
+		}
+
+		if err := syscall.Setuid(uid); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -1,7 +1,9 @@
 package runtime
 
+import "log"
+
 func Must(err error) {
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 }
